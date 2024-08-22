@@ -1,0 +1,83 @@
+"visitor_id","lead_id","amount","created_at","closing_reason","status_id","visit_date","utm_source","utm_medium","utm_campaign"
+"35060e525ca62de0a0aa93992c7e07799d855f79","26066151",237990,2023-06-15 12:52:40.000,Успешная продажа,142,2023-06-01 10:40:28.000,yandex,cpc,prof-frontend
+d183fbda6f03b965a1cd1cee0a3f7b81a44b78ec,"74450379",201150,2023-06-30 14:36:31.000,Успешная продажа,142,2023-06-01 14:39:00.000,yandex,cpc,base-frontend
+ca003c89182365dd75262e54772fda03ee923e92,"48838540",189210,2023-06-20 20:49:16.000,Успешная продажа,142,2023-06-01 04:58:00.000,vk,cpc,freemium-frontend
+d31c95902f2d3183e7052c235ad72d82838e98c2,"21579820",188991,2023-06-19 15:28:22.000,Успешная продажа,142,2023-06-01 10:44:00.000,yandex,cpc,freemium
+fd1438246c3b520c8dfa1aed4c73133c8ca10ab4,"23169912",180306,2023-06-14 06:13:44.000,Успешная продажа,142,2023-06-01 14:57:00.000,yandex,cpc,prof-frontend
+b6ddcd9f994bad353f37b0c5f7115b66d07b10c2,"50769366",178800,2023-06-15 11:43:46.000,Успешная продажа,142,2023-06-01 03:41:00.000,vk,cpc,prof-java
+f2db2eb1295e51cf3426e4211172d839e7f93ddc,"25327894",167625,2023-06-11 21:57:08.000,Успешная продажа,142,2023-06-01 19:39:00.000,yandex,cpc,prof-frontend
+bd5ad484a0cf7f80c1522009dd4ee3d825f35a46,"73882489",160920,2023-06-26 08:36:49.000,Успешная продажа,142,2023-06-01 11:34:00.000,yandex,cpc,base-python
+f1dc9c36bd7269ed93e736b29de33e0e7a02e1a3,"20614407",151192,2023-06-26 17:47:47.000,Успешная продажа,142,2023-06-20 15:15:04.701,telegram,cpp,base-java
+"36d4c2cfec3dba3a50cfd0d31ace2d4dcb70560c","24703215",150255,2023-06-03 14:40:56.000,Успешная продажа,142,2023-06-01 16:43:00.000,yandex,cpc,dod-php
+0,"--построим витрину для модели атрибуции Last Paid Click. Витрина должна содержать следующие данные
+--visitor_id — уникальный человек на сайте
+--visit_date — время визита
+--utm_source / utm_medium / utm_campaign — метки c учетом модели атрибуции
+--lead_id — идентификатор лида, если пользователь сконвертился в лид после(во время) визита, NULL — если пользователь не оставил лид
+--created_at — время создания лида, NULL — если пользователь не оставил лид
+--amount — сумма лида (в деньгах), NULL — если пользователь не оставил лид
+--closing_reason — причина закрытия, NULL — если пользователь не оставил лид
+--status_id — код причины закрытия, NULL — если пользователь не оставил лид
+--Клик считается платным для следующих рекламных компаний:
+--cpc  cpm   cpa   youtube   cpp   tg   social
+
+
+WITH last_paid_sessions AS (
+    SELECT 
+        s.visitor_id,
+        s.visit_date,
+        s.source,
+        s.medium,
+        s.campaign,
+        ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC) AS rn
+    FROM 
+        sessions s
+--    LEFT JOIN leads l ON s.visitor_id = l.visitor_id and 
+--    l.created_at >= s.visit_date
+    WHERE 
+        s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social'))
+
+SELECT 
+    l.visitor_id,
+    l.lead_id,
+    l.amount,
+    l.created_at,
+    l.closing_reason,
+    l.status_id,
+    s.visit_date,
+    s.source AS utm_source,
+    s.medium AS utm_medium,
+    s.campaign AS utm_campaign
+FROM 
+    last_paid_sessions s
+LEFT JOIN leads l ON s.visitor_id = l.visitor_id and 
+    l.created_at >= s.visit_date 
+WHERE 
+    s.rn = 1  -- Выбираем последний платный клик для каждого посетителя
+ORDER BY 
+    l.amount DESC NULLS LAST, 
+    s.visit_date ASC, 
+    s.source ASC, 
+    s.medium ASC, 
+    s.campaign asc
+limit 10;
+   
+   -- можно просо сделать select * , а лефт в первом запросе 
+
+
+--select visitor_id, lead_id, amount, created_at , closing_reason , learning_format , status_id 
+--from leads l 
+--
+--select visitor_id , visit_date , landing_page , source , medium , campaign , content
+--from sessions s 
+--
+--select count(visitor_id), source
+--from sessions s 
+--group by source 
+--
+--select  ad_id , ad_name , campaign_id , campaign_name , campaign_date , daily_spent , utm_source , utm_medium , utm_campaign , utm_content 
+--from vk_ads va 
+--
+--select ad_id , campaign_id , campaign_name , utm_source ,utm_medium , utm_content , campaign_date , daily_spent 
+--from ya_ads ya 
+",Thu Aug 22 21:56:01 MSK 2024,2024-08-22 21:56:02.000
