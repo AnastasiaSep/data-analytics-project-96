@@ -1,17 +1,7 @@
---Расчет расходов
---Построим витрину со следующими полями:
---visit_date — дата визита
---utm_source / utm_medium / utm_campaign — метки пользователя
---visitors_count — количество визитов в этот день с этими метками
---total_cost — затраты на рекламу
---leads_count — количество лидов, которые оставили визиты, кликнувшие в этот день с этими метками
---purchases_count — количество успешно закрытых лидов (closing_reason = “Успешно реализовано” или status_code = 142)
---revenue — деньги с успешно закрытых лидов
-
 WITH last_paid_sessions AS (
     SELECT 
         s.visitor_id,
-        CAST(s.visit_date AS DATE) AS visit_date, 
+        s.visit_date AS visit_date, 
         s.source AS utm_source,
         s.medium AS utm_medium,
         s.campaign AS utm_campaign,
@@ -37,7 +27,7 @@ filtered_sessions AS (
 ),
 lead_info AS (
     SELECT 
-        CAST(s.visit_date AS DATE) AS visit_date, 
+        s.visit_date AS visit_date, 
         s.utm_source,
         s.utm_medium,
         s.utm_campaign,
@@ -47,18 +37,18 @@ lead_info AS (
     FROM 
         last_paid_sessions s
     LEFT JOIN 
-        leads l ON s.visitor_id = l.visitor_id AND l.created_at >= s.visit_date
+        leads l ON s.visitor_id = l.visitor_id AND l.created_at > s.visit_date
     WHERE 
         s.rn = 1
     GROUP BY 
-        CAST(s.visit_date AS DATE), s.utm_source, s.utm_medium, s.utm_campaign
+        s.visit_date, s.utm_source, s.utm_medium, s.utm_campaign
 ),
 ad_costs AS (
     SELECT 
         va.utm_source,
         va.utm_medium,
         va.utm_campaign,
-        CAST(va.campaign_date AS DATE) AS visit_date, 
+        va.campaign_date AS visit_date, 
         SUM(va.daily_spent) AS total_cost
     FROM 
         vk_ads va
@@ -69,16 +59,16 @@ ad_costs AS (
         ya.utm_source,
         ya.utm_medium,
         ya.utm_campaign,
-        CAST(ya.campaign_date AS DATE) AS visit_date,
+        ya.campaign_date AS visit_date,
         SUM(ya.daily_spent) AS total_cost
     FROM 
         ya_ads ya
     GROUP BY 
-        ya.utm_source, ya.utm_medium, ya.utm_campaign, CAST(ya.campaign_date AS DATE)
+        ya.utm_source, ya.utm_medium, ya.utm_campaign, ya.campaign_date
 ),
 t as 
-	(SELECT 
-	to_char(f.visit_date, 'YYYY-MM-DD') as visit_date,
+  (SELECT 
+    to_char(f.visit_date, 'YYYY-MM-DD') as visit_date,
     f.utm_source,
     f.utm_medium,
     f.utm_campaign,
