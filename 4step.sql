@@ -48,28 +48,28 @@ ad_costs AS (
         va.utm_source,
         va.utm_medium,
         va.utm_campaign,
-        va.campaign_date AS visit_date,  
+        cast(va.campaign_date as DATE) AS visit_date,  
         SUM(va.daily_spent) AS total_cost
     FROM 
         vk_ads va
     GROUP BY 
-        va.utm_source, va.utm_medium, va.utm_campaign, va.campaign_date
+        va.utm_source, va.utm_medium, va.utm_campaign, cast(va.campaign_date as DATE)
     UNION ALL
     SELECT 
         ya.utm_source,
         ya.utm_medium,
         ya.utm_campaign,
-        ya.campaign_date AS visit_date,
+        cast(ya.campaign_date as DATE) AS visit_date,
         SUM(ya.daily_spent) AS total_cost
     FROM 
         ya_ads ya
     GROUP BY 
-        ya.utm_source, ya.utm_medium, ya.utm_campaign, ya.campaign_date
+        ya.utm_source, ya.utm_medium, ya.utm_campaign, cast(ya.campaign_date as DATE)
 ),
 t AS (
     SELECT 
         --to_char(f.visit_date, 'YYYY-MM-DD') AS visit_date,
-        DATE(f.visit_date) AS visit_date,
+        cast(f.visit_date as DATE) AS visit_date,
         f.utm_source,
         f.utm_medium,
         f.utm_campaign,
