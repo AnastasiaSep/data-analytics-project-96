@@ -13,7 +13,7 @@ WITH last_paid_sessions AS (
 ),
 filtered_sessions AS (
     SELECT 
-        visit_date,
+        visit_date::date as visit_date,
         utm_source,
         utm_medium,
         utm_campaign,
@@ -23,11 +23,11 @@ filtered_sessions AS (
     WHERE 
         rn = 1
     GROUP BY 
-        visit_date, utm_source, utm_medium, utm_campaign
+        visit_date::date, utm_source, utm_medium, utm_campaign
 ),
 lead_info AS (
     SELECT 
-        s.visit_date,  
+        s.visit_date::date as visit_date,  
         s.utm_source,
         s.utm_medium,
         s.utm_campaign,
@@ -41,7 +41,7 @@ lead_info AS (
     WHERE 
         s.rn = 1
     GROUP BY 
-        s.visit_date, s.utm_source, s.utm_medium, s.utm_campaign
+        s.visit_date::date, s.utm_source, s.utm_medium, s.utm_campaign
 ),
 ad_costs AS (
     SELECT 
@@ -99,7 +99,7 @@ t AS (
         f.utm_campaign
 )
 SELECT 
-    visit_date,
+   visit_date,
     utm_source,
     utm_medium,
     utm_campaign,
@@ -124,4 +124,3 @@ GROUP BY
 ORDER BY 
     revenue DESC;
 
---и скрипт - 40
