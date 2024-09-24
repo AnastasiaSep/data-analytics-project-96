@@ -77,7 +77,7 @@ ad_costs AS (
         ya.utm_source, ya.utm_medium, ya.utm_campaign, ya.campaign_date
 )
 SELECT 
-	to_char(f.visit_date, 'YYYY-MM') as visit_date,
+	to_char(f.visit_date, 'YYYY-MM-DD') as visit_date,
     f.utm_source,
     f.utm_medium,
     f.utm_campaign,
