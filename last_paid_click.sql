@@ -1,4 +1,3 @@
-4
 WITH last_paid_sessions AS (
     SELECT 
         s.visitor_id,
