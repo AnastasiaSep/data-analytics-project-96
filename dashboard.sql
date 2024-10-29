@@ -132,3 +132,135 @@ GROUP BY
     t.utm_campaign
 ORDER BY
     revenue DESC;
+
+-- 90% лидов
+WITH lead_sessions AS (
+    SELECT
+        s.visitor_id,
+        MIN(s.visit_date::date) AS first_visit_date
+    FROM
+        sessions AS s
+    WHERE
+        s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
+    GROUP BY
+        s.visitor_id
+),
+
+lead_closing_data AS (
+    SELECT
+        l.lead_id,
+        ls.first_visit_date::date AS first_visit_date,
+        l.created_at::date AS lead_creation_date,
+        (l.created_at::date - ls.first_visit_date) AS days_to_close
+    FROM
+        leads AS l
+    INNER JOIN
+        lead_sessions AS ls
+        ON l.visitor_id = ls.visitor_id AND l.created_at > ls.first_visit_date
+    WHERE
+        (l.status_id = 142 OR l.closing_reason = 'Успешно реализовано')
+),
+
+lead_closing_summary AS (
+    SELECT
+        days_to_close,
+        COUNT(lead_id) AS leads_count
+    FROM
+        lead_closing_data
+    GROUP BY
+        days_to_close
+),
+
+lead_cumulative AS (
+    -- накопительное количество закрытых лидов
+    SELECT
+        days_to_close,
+        SUM(leads_count) OVER (ORDER BY days_to_close) AS leads,
+        SUM(SUM(leads_count)) OVER () AS total_leads
+    FROM
+        lead_closing_summary
+    GROUP BY days_to_close, leads_count
+)
+
+SELECT
+    days_to_close,
+    leads,
+    total_leads,
+    (leads::float / total_leads::float) * 100 AS cumulative_percentage
+FROM
+    lead_cumulative
+WHERE
+    (leads::float / total_leads::float) >= 0.9
+ORDER BY
+    days_to_close
+LIMIT 1;
+
+
+-- корреляция органики
+WITH daily_visits AS (
+    SELECT
+        visit_date::date AS visit_date,
+        SUM(CASE WHEN medium = 'organic' THEN 1 ELSE 0 END) AS organic_visits
+    FROM
+        sessions
+    GROUP BY
+        visit_date::date
+),
+
+active_campaigns AS (
+    SELECT
+        ad.campaign_date::date AS visit_date,
+        COUNT(
+            DISTINCT CONCAT(ad.utm_source, ad.utm_medium, ad.utm_campaign)
+        ) AS active_campaigns
+    FROM (
+        SELECT
+            utm_source,
+            utm_medium,
+            utm_campaign,
+            campaign_date::date AS campaign_date,
+            SUM(daily_spent) AS total_cost
+        FROM (
+            SELECT
+                utm_source,
+                utm_medium,
+                utm_campaign,
+                campaign_date,
+                daily_spent
+            FROM
+                vk_ads
+            UNION ALL
+            SELECT
+                utm_source,
+                utm_medium,
+                utm_campaign,
+                campaign_date,
+                daily_spent
+            FROM
+                ya_ads
+        ) AS all_ads
+        GROUP BY
+            utm_source, utm_medium, utm_campaign, campaign_date::date
+    ) AS ad
+    WHERE ad.total_cost > 0
+    GROUP BY
+        ad.campaign_date::date
+)
+--
+--SELECT 
+--    corr(COALESCE(v.organic_visits, 0), COALESCE(a.active_campaigns, 0)) AS correlation_coefficient
+--FROM 
+--    daily_visits v
+--LEFT JOIN 
+--    active_campaigns a ON v.visit_date = a.visit_date;
+
+SELECT
+    v.visit_date,
+    COALESCE(a.active_campaigns, 0) AS active_campaigns,
+    COALESCE(v.organic_visits, 0) AS organic_visits
+FROM
+    daily_visits AS v
+LEFT JOIN
+    active_campaigns AS a ON v.visit_date = a.visit_date
+ORDER BY
+    v.visit_date ASC;
