@@ -98,29 +98,37 @@ t AS (
         f.utm_medium,                 
         f.utm_campaign
 )
-
-SELECT 
-    visit_date,
-    utm_source,
-    utm_medium,
-    utm_campaign,
-    SUM(visitors_count) AS visits_count,
+SELECT
+    t.visit_date,
+    t.utm_source,
+    t.utm_medium,
+    t.utm_campaign,
+    SUM(t.visitors_count) AS visits_count,
     SUM(total_cost) AS total_cost,
     SUM(revenue) AS revenue,
     SUM(leads_count) AS leads_count,
-    SUM(purchases_count) AS purchase_count,
-    COALESCE(SUM(leads_count) / NULLIF(SUM(visitors_count), 0) * 100, 0) AS conversion_r_click_lead,
-    COALESCE(SUM(purchases_count) / NULLIF(SUM(leads_count), 0) * 100, 0) AS conversion_r_lead_purchase,
+    SUM(t.purchases_count) AS purchase_count,
+    COALESCE(
+        SUM(leads_count) / NULLIF(SUM(t.visitors_count), 0) * 100, 0
+    ) AS conversion_r_click_lead,
+    COALESCE(
+        SUM(t.purchases_count) / NULLIF(SUM(leads_count), 0) * 100, 0
+    ) AS conversion_r_lead_purchase,
     COALESCE(SUM(t.total_cost) / NULLIF(SUM(t.visitors_count), 0), 0) AS cpu,
     COALESCE(SUM(t.total_cost) / NULLIF(SUM(t.leads_count), 0), 0) AS cpl,
     COALESCE(SUM(t.total_cost) / NULLIF(SUM(t.purchases_count), 0), 0) AS cppu,
-    COALESCE((SUM(t.revenue) - SUM(t.total_cost)) / NULLIF(SUM(t.total_cost), 0) * 100, 0) AS roi
-FROM 
+    COALESCE(
+        (SUM(t.revenue) - SUM(t.total_cost))
+        / NULLIF(SUM(t.total_cost), 0)
+        * 100,
+        0
+    ) AS roi
+FROM
     t
-GROUP BY 
-    visit_date,
-    utm_source,
-    utm_medium,
-    utm_campaign
-ORDER BY 
+GROUP BY
+    t.visit_date,
+    t.utm_source,
+    t.utm_medium,
+    t.utm_campaign
+ORDER BY
     revenue DESC;
