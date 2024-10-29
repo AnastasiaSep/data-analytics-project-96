@@ -96,15 +96,8 @@
 --    f.utm_medium,               
 --    f.utm_campaign
 --limit 15;               
---
---
-
-
-
 
 --3 шаг финальная версия
-
-
 
 WITH last_paid_sessions AS (
     SELECT 
@@ -176,7 +169,6 @@ ad_costs AS (
 ),
 t AS (
     SELECT 
-        --to_char(f.visit_date, 'YYYY-MM-DD') AS visit_date,
         cast(f.visit_date as DATE) AS visit_date,
         f.utm_source,
         f.utm_medium,
@@ -236,4 +228,4 @@ ORDER BY
     utm_source,                  
     utm_medium,               
     utm_campaign
-limit 15; 
+limit 15;
