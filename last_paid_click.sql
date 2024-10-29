@@ -10,11 +10,9 @@ WITH last_paid_sessions AS (
         AS rn
     FROM
         sessions AS s
-
     WHERE
         s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
 )
-
 SELECT
     l.visitor_id,
     --to_char(s.visit_date, 'YYYY-MM-DD') as visit_date,
@@ -28,7 +26,6 @@ SELECT
     l.amount,
     l.closing_reason,
     l.status_id
-
 FROM
     last_paid_sessions AS s
 LEFT JOIN leads AS l
