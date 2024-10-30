@@ -1,4 +1,4 @@
---3 шаг финальная версия
+-- 3 шаг финальная версия
 WITH last_paid_sessions AS (
     SELECT 
         s.visitor_id,
@@ -14,7 +14,7 @@ WITH last_paid_sessions AS (
 ),
 filtered_sessions AS (
     SELECT 
-        visit_date::date as visit_date,
+        visit_date::date AS visit_date,
         utm_source,
         utm_medium,
         utm_campaign,
@@ -28,7 +28,7 @@ filtered_sessions AS (
 ),
 lead_info AS (
     SELECT 
-        s.visit_date::date as visit_date,  
+        s.visit_date::date AS visit_date,  
         s.utm_source,
         s.utm_medium,
         s.utm_campaign,
@@ -50,27 +50,27 @@ ad_costs AS (
         va.utm_source,
         va.utm_medium,
         va.utm_campaign,
-        cast(va.campaign_date as DATE) AS visit_date,  
+        CAST(va.campaign_date AS DATE) AS visit_date,  
         SUM(va.daily_spent) AS total_cost
     FROM 
         vk_ads va
     GROUP BY 
-        va.utm_source, va.utm_medium, va.utm_campaign, cast(va.campaign_date as DATE)
+        va.utm_source, va.utm_medium, va.utm_campaign, CAST(va.campaign_date AS DATE)
     UNION ALL
     SELECT 
         ya.utm_source,
         ya.utm_medium,
         ya.utm_campaign,
-        cast(ya.campaign_date as DATE) AS visit_date,
+        CAST(ya.campaign_date AS DATE) AS visit_date,
         SUM(ya.daily_spent) AS total_cost
     FROM 
         ya_ads ya
     GROUP BY 
-        ya.utm_source, ya.utm_medium, ya.utm_campaign, cast(ya.campaign_date as DATE)
+        ya.utm_source, ya.utm_medium, ya.utm_campaign, CAST(ya.campaign_date AS DATE)
 ),
-t AS (
+aggregated_data AS (
     SELECT 
-        cast(f.visit_date as DATE) AS visit_date,
+        CAST(f.visit_date AS DATE) AS visit_date,
         f.utm_source,
         f.utm_medium,
         f.utm_campaign,
@@ -92,7 +92,7 @@ t AS (
         AND f.utm_medium = a.utm_medium
         AND f.utm_campaign = a.utm_campaign
     ORDER BY
-      l.revenue DESC NULLS LAST,    
+        l.revenue DESC NULLS LAST,    
         f.visit_date ASC,              
         f.visitors_count DESC,         
         f.utm_source,                  
@@ -102,21 +102,22 @@ t AS (
 SELECT 
    visit_date,
    SUM(visitors_count) AS visitors_count,
-    utm_source,
-    utm_medium,
-    utm_campaign,
-    SUM(total_cost) AS total_cost,
-    SUM(leads_count) AS leads_count,
-    SUM(purchases_count) AS purchases_count,
-    SUM(revenue) AS revenue
---    COALESCE(SUM(leads_count) / NULLIF(SUM(visitors_count), 0) * 100, 0) AS conversion_r_click_lead,
---    COALESCE(SUM(purchases_count) / NULLIF(SUM(leads_count), 0) * 100, 0) AS conversion_r_lead_purchase,
---    COALESCE(SUM(t.total_cost) / NULLIF(SUM(t.visitors_count), 0), 0) AS cpu,
---    COALESCE(SUM(t.total_cost) / NULLIF(SUM(t.leads_count), 0), 0) AS cpl,
---    COALESCE(SUM(t.total_cost) / NULLIF(SUM(t.purchases_count), 0), 0) AS cppu,
---    COALESCE((SUM(t.revenue) - SUM(t.total_cost)) / NULLIF(SUM(t.total_cost), 0) * 100, 0) AS roi
+   utm_source,
+   utm_medium,
+   utm_campaign,
+   SUM(total_cost) AS total_cost,
+   SUM(leads_count) AS leads_count,
+   SUM(purchases_count) AS purchases_count,
+   SUM(revenue) AS revenue
+   --  Раскомментируйте следующие строки, если нужно добавить расчеты
+   -- COALESCE(SUM(leads_count) / NULLIF(SUM(visitors_count), 0) * 100, 0) AS conversion_r_click_lead,
+   -- COALESCE(SUM(purchases_count) / NULLIF(SUM(leads_count), 0) * 100, 0) AS conversion_r_lead_purchase,
+   -- COALESCE(SUM(total_cost) / NULLIF(SUM(visitors_count), 0), 0) AS cpu,
+   -- COALESCE(SUM(total_cost) / NULLIF(SUM(leads_count), 0), 0) AS cpl,
+   -- COALESCE(SUM(total_cost) / NULLIF(SUM(purchases_count), 0), 0) AS cppu,
+   -- COALESCE((SUM(revenue) - SUM(total_cost)) / NULLIF(SUM(total_cost), 0) * 100, 0) AS roi
 FROM 
-    t
+    aggregated_data
 GROUP BY 
     visit_date,
     utm_source,
@@ -129,4 +130,4 @@ ORDER BY
     utm_source,                  
     utm_medium,               
     utm_campaign
-limit 15;
+LIMIT 15;
