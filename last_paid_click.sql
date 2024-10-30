@@ -5,7 +5,9 @@ WITH last_paid_sessions AS (
         s.source,
         s.medium,
         s.campaign,
-        ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC) AS rn
+        ROW_NUMBER()
+            OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC)
+        AS rn
     FROM
         sessions AS s
     WHERE
@@ -27,8 +29,9 @@ FROM
     last_paid_sessions AS s
 LEFT JOIN
     leads AS l
-    ON  s.visitor_id = l.visitor_id
-    AND s.visit_date <= l.created_at
+    ON
+        s.visitor_id = l.visitor_id
+        AND s.visit_date <= l.created_at
 WHERE
     s.rn = 1  -- Выбираем последний платный клик для каждого посетителя
 ORDER BY
