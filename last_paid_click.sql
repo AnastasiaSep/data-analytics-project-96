@@ -21,7 +21,6 @@ SELECT
     s.medium AS utm_medium,
     s.campaign AS utm_campaign,
     l.lead_id,
-    --to_char(l.created_at, 'YYYY-MM-DD') as created_at,
     l.created_at,
     l.amount,
     l.closing_reason,
@@ -33,7 +32,8 @@ LEFT JOIN leads AS l
         s.visitor_id = l.visitor_id
         AND s.visit_date <= l.created_at
 WHERE
-    s.rn = 1  -- Выбираем последний платный клик для каждого посетителя
+    s.rn = 1
+    -- Выбираем последний платный клик для каждого посетителя
 ORDER BY
     l.amount DESC NULLS LAST,
     s.visit_date ASC,
