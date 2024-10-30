@@ -5,17 +5,15 @@ WITH last_paid_sessions AS (
         s.source,
         s.medium,
         s.campaign,
-        ROW_NUMBER()
-            OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC)
-        AS rn
+        ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC) AS rn
     FROM
         sessions AS s
     WHERE
         s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
 )
+
 SELECT
     l.visitor_id,
-    --to_char(s.visit_date, 'YYYY-MM-DD') as visit_date,
     s.visit_date,
     s.source AS utm_source,
     s.medium AS utm_medium,
@@ -27,13 +25,12 @@ SELECT
     l.status_id
 FROM
     last_paid_sessions AS s
-LEFT JOIN leads AS l
-    ON
-        s.visitor_id = l.visitor_id
-        AND s.visit_date <= l.created_at
+LEFT JOIN
+    leads AS l
+    ON s.visitor_id = l.visitor_id
+    AND s.visit_date <= l.created_at
 WHERE
-    s.rn = 1
-    -- Выбираем последний платный клик для каждого посетителя
+    s.rn = 1  -- Выбираем последний платный клик для каждого посетителя
 ORDER BY
     l.amount DESC NULLS LAST,
     s.visit_date ASC,
