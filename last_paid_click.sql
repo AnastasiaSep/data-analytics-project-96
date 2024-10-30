@@ -6,7 +6,7 @@ WITH last_paid_sessions AS (
         s.medium,
         s.campaign,
         ROW_NUMBER()
-            OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC)
+        OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC)
         AS rn
     FROM
         sessions AS s
